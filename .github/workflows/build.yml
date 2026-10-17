@@ -46,4 +46,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: libgstndi-centos8-compatible
-          path: gst-plugins-rs/target/release/libgstndi.so
+          path: plugin-src/target/release/libgstndi.so
