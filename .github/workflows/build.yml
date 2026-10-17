@@ -1,33 +1,30 @@
-name: Build gst-plugin-ndi 0.15.4 for CentOS 8
+name: Fixed Build gst-plugin-ndi 0.15.4 for CentOS 8
 on: workflow_dispatch
 
 jobs:
   build-centos8:
     runs-on: ubuntu-latest
-    # Запускаем сборку внутри контейнера Rocky Linux 8 (аналог CentOS 8) с GLIBC 2.28
+    # Используем контейнер Fedora 34, где встроен GStreamer 1.18 и совместимый GLIBC
     container:
-      image: rockylinux:8
+      image: fedora:34
 
     steps:
-      - name: Install System Build Tools & GStreamer Dev
+      - name: Install Build Tools & GStreamer 1.18 Dev
         run: |
-          # Включаем репозиторий EPEL и PowerTools (AppStream) для зависимостей
-          dnf install -y epel-release dnf-plugins-core
-          dnf config-manager --set-enabled powertools || dnf config-manager --set-enabled crb
-          dnf update -y
-          
-          # Устанавливаем инструменты разработки и GStreamer заголовки
-          dnf groupinstall -y "Development Tools"
+          dnf clean all
           dnf install -y \
+            gcc \
+            gcc-c++ \
+            make \
             gstreamer1-devel \
             gstreamer1-plugins-base-devel \
             glib2-devel \
             pkgconfig \
-            wget
+            wget \
+            git
 
       - name: Verify Environment
         run: |
-          ldd --version # Должно показать GLIBC 2.28
           pkg-config --modversion gstreamer-1.0
 
       - name: Install Rust
@@ -43,9 +40,8 @@ jobs:
           cd plugin-src
           cargo build --release
 
-      - name: Upload CentOS 8 Compatible File
+      - name: Upload Finished So-File
         uses: actions/upload-artifact@v4
         with:
-          name: libgstndi-centos8
+          name: libgstndi-centos8-compatible
           path: plugin-src/target/release/libgstndi.so
-
