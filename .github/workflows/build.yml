@@ -1,43 +1,51 @@
-name: Build gst-plugin-ndi 0.15.4 for GStreamer 1.18
-on: workflow_dispatch # Ручной запуск кнопкой в Actions
+name: Build gst-plugin-ndi 0.15.4 for CentOS 8
+on: workflow_dispatch
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-20.04
+  build-centos8:
+    runs-on: ubuntu-latest
+    # Запускаем сборку внутри контейнера Rocky Linux 8 (аналог CentOS 8) с GLIBC 2.28
+    container:
+      image: rockylinux:8
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Add PPA and Install GStreamer 1.18
+      - name: Install System Build Tools & GStreamer Dev
         run: |
-          # Добавляем репозиторий со стабильной сборкой GStreamer 1.18+
-          sudo add-apt-repository -y ppa:tidewise/gstreamer-1.22
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev \
-            libglib2.0-dev \
-            pkg-config
+          # Включаем репозиторий EPEL и PowerTools (AppStream) для зависимостей
+          dnf install -y epel-release dnf-plugins-core
+          dnf config-manager --set-enabled powertools || dnf config-manager --set-enabled crb
+          dnf update -y
+          
+          # Устанавливаем инструменты разработки и GStreamer заголовки
+          dnf groupinstall -y "Development Tools"
+          dnf install -y \
+            gstreamer1-devel \
+            gstreamer1-plugins-base-devel \
+            glib2-devel \
+            pkgconfig \
+            wget
 
-      - name: Verify GStreamer Version
+      - name: Verify Environment
         run: |
+          ldd --version # Должно показать GLIBC 2.28
           pkg-config --modversion gstreamer-1.0
 
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Download gst-plugin-ndi v0.15.4
+      - name: Install Rust
         run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Download & Build Plugin v0.15.4
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
           cargo install cargo-download
           cargo download gst-plugin-ndi==0.15.4 --extract --output plugin-src
-
-      - name: Build Plugin (Release)
-        run: |
           cd plugin-src
           cargo build --release
 
-      - name: Upload Finished So-File
+      - name: Upload CentOS 8 Compatible File
         uses: actions/upload-artifact@v4
         with:
-          name: libgstndi-gstreamer-1.18
+          name: libgstndi-centos8
           path: plugin-src/target/release/libgstndi.so
+
