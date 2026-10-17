@@ -1,16 +1,17 @@
 name: Build gst-plugin-ndi 0.15.4 for GStreamer 1.18
-on: workflow_dispatch # Кнопка для ручного запуска в браузере
+on: workflow_dispatch # Ручной запуск кнопкой в Actions
 
 jobs:
   build-linux:
-    # Используем Ubuntu 20.04 LTS, где базовой версией является GStreamer 1.18
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install GStreamer 1.18 & Dev Packages
+      - name: Add PPA and Install GStreamer 1.18
         run: |
+          # Добавляем репозиторий со стабильной сборкой GStreamer 1.18+
+          sudo add-apt-repository -y ppa:tidewise/gstreamer-1.22
           sudo apt-get update
           sudo apt-get install -y \
             libgstreamer1.0-dev \
@@ -20,7 +21,6 @@ jobs:
 
       - name: Verify GStreamer Version
         run: |
-          gst-inspect-1.0 --version
           pkg-config --modversion gstreamer-1.0
 
       - name: Install Rust Toolchain
