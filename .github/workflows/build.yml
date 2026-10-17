@@ -34,14 +34,13 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Clone Repo & Build Plugin v0.15.4
+      - name: Download & Build Plugin v0.15.4
         run: |
           export PATH="$HOME/.cargo/bin:$PATH"
-          # Скачиваем официальный репозиторий плагинов
-          git clone --depth 1 --branch gst-plugins-rs-0.15.4 https://freedesktop.org
-          cd gst-plugins-rs
-          # Компилируем конкретно плагин NDI в релизном режиме
-          cargo build --release -p gst-plugin-ndi
+          cargo install cargo-download
+          cargo download gst-plugin-ndi==0.15.4 --extract --output plugin-src
+          cd plugin-src
+          cargo build --release
 
       - name: Upload Finished So-File
         uses: actions/upload-artifact@v4
