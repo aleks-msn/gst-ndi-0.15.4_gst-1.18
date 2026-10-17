@@ -1,0 +1,43 @@
+name: Build gst-plugin-ndi 0.15.4 for GStreamer 1.18
+on: workflow_dispatch # Кнопка для ручного запуска в браузере
+
+jobs:
+  build-linux:
+    # Используем Ubuntu 20.04 LTS, где базовой версией является GStreamer 1.18
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install GStreamer 1.18 & Dev Packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            libglib2.0-dev \
+            pkg-config
+
+      - name: Verify GStreamer Version
+        run: |
+          gst-inspect-1.0 --version
+          pkg-config --modversion gstreamer-1.0
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Download gst-plugin-ndi v0.15.4
+        run: |
+          cargo install cargo-download
+          cargo download gst-plugin-ndi==0.15.4 --extract --output plugin-src
+
+      - name: Build Plugin (Release)
+        run: |
+          cd plugin-src
+          cargo build --release
+
+      - name: Upload Finished So-File
+        uses: actions/upload-artifact@v4
+        with:
+          name: libgstndi-gstreamer-1.18
+          path: plugin-src/target/release/libgstndi.so
