@@ -14,7 +14,18 @@ jobs:
           # Включаем EPEL и репозиторий пакетов разработки (сначала пробуем powertools, затем crb)
           dnf install -y epel-release dnf-plugins-core
           dnf config-manager --set-enabled powertools || dnf config-manager --set-enabled crb
+          
+          # 2. Добавляем кастомный репозиторий Ramonak 3.4, содержащий GStreamer 1.18
+          cat <<EOF > /etc/yum.repos.d/ramonak.repo
+          [ramonak-3.4]
+          name=Ramonak 3.4 Repository for Rocky Linux 8
+          baseurl=https://update.ramonak.pro/ramonak-3.4
+          enabled=1
+          gpgcheck=0
+          EOF
+          
           dnf clean all
+          dnf makecache
           
           # Устанавливаем компиляторы и dev-пакеты
           dnf groupinstall -y "Development Tools"
