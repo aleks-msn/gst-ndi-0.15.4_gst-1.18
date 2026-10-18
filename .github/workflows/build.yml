@@ -11,9 +11,9 @@ jobs:
     steps:
       - name: Install Development Tools & GStreamer 1.18
         run: |
-          # Включаем официальные репозитории для пакетов разработки (включая GStreamer 1.18)
+          # Включаем EPEL и репозиторий пакетов разработки (сначала пробуем powertools, затем crb)
           dnf install -y epel-release dnf-plugins-core
-          dnf config-manager --set-enabled crb
+          dnf config-manager --set-enabled powertools || dnf config-manager --set-enabled crb
           dnf clean all
           
           # Устанавливаем компиляторы и dev-пакеты
